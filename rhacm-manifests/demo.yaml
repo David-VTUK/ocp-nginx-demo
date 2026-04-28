@@ -72,7 +72,7 @@ spec:
       source:
         repoURL: https://github.com/David-VTUK/ocp-nginx-demo.git
         targetRevision: main
-        path: 'overlays/{{index .metadata.labels "cluster.open-cluster-management.io/clusterset"}}'
+        path: 'nginx-kustomize/overlays/{{index .metadata.labels "cluster.open-cluster-management.io/clusterset"}}'
       destination:
         namespace: nginx-demo
         server: '{{.server}}'
