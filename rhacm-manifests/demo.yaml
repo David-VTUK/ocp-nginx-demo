@@ -54,14 +54,16 @@ metadata:
   name: nginx-appset
   namespace: openshift-gitops
 spec:
-  goTemplate: true 
+  goTemplate: true
   generators:
-    - clusterDecisionResource:
-        configMapRef: acm-placement
-        labelSelector:
-          matchLabels:
-            cluster.open-cluster-management.io/placement: nginx-clusterset-placement
-        requeueAfterSeconds: 180
+    - clusters:
+        selector:
+          matchExpressions:
+            - key: cluster.open-cluster-management.io/clusterset
+              operator: In
+              values:
+                - dev-clusters
+                - prod-clusters
   template:
     metadata:
       name: 'nginx-{{.name}}'
