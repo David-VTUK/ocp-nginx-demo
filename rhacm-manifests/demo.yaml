@@ -1,0 +1,82 @@
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSet
+metadata:
+  name: dev-clusters
+---
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSet
+metadata:
+  name: prod-clusters
+---
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: dev-clusters
+  namespace: openshift-gitops
+spec:
+  clusterSet: dev-clusters
+---
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: prod-clusters
+  namespace: openshift-gitops
+spec:
+  clusterSet: prod-clusters
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: nginx-clusterset-placement
+  namespace: openshift-gitops
+spec:
+  clusterSets:
+    - dev-clusters
+    - prod-clusters
+---
+apiVersion: apps.open-cluster-management.io/v1beta1
+kind: GitOpsCluster
+metadata:
+  name: nginx-gitops-cluster
+  namespace: openshift-gitops
+spec:
+  argoServer:
+    cluster: local-cluster
+    argoNamespace: openshift-gitops
+  placementRef:
+    kind: Placement
+    apiVersion: cluster.open-cluster-management.io/v1beta1
+    name: nginx-clusterset-placement
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: nginx-appset
+  namespace: openshift-gitops
+spec:
+  goTemplate: true 
+  generators:
+    - clusterDecisionResource:
+        configMapRef: acm-placement
+        labelSelector:
+          matchLabels:
+            cluster.open-cluster-management.io/placement: nginx-clusterset-placement
+        requeueAfterSeconds: 180
+  template:
+    metadata:
+      name: 'nginx-{{.name}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/your-org/nginx-kustomize-demo.git
+        targetRevision: main
+        path: 'overlays/{{index .metadata.labels "cluster.open-cluster-management.io/clusterset"}}'
+      destination:
+        namespace: nginx-demo
+        server: '{{.server}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
