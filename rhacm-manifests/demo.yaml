@@ -70,7 +70,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/David-VTUK/ocp-nginx-demo.git
+        repoURL: https://github.com/David-VTUK/rhacm-application-kustomize-example.git
         targetRevision: main
         path: 'nginx-kustomize/overlays/{{index .metadata.labels "cluster.open-cluster-management.io/clusterset"}}'
       destination:
